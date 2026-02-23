@@ -1,0 +1,6 @@
+target/
+*.webp
+*.jpg
+*.png
+docs/
+.git/

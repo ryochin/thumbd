@@ -1,0 +1,12 @@
+[workspace]
+resolver = "2"
+members = [
+  "server",
+  "client"
+]
+
+[profile.release]
+codegen-units = 1
+lto = true
+panic = 'abort'
+strip = true

@@ -1,0 +1,20 @@
+[package]
+name    = "thumbd"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tonic        = { version = "0.12", features = ["transport"] }
+tonic-health = "0.12"
+prost        = "0.13"
+tokio        = { version = "1", features = ["full"] }
+tokio-stream = { version = "0.1", features = ["net"] }
+image        = "0.25"
+webp         = "0.3"
+libwebp-sys  = "0.9"
+clap         = { version = "4", features = ["derive"] }
+tracing      = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+[build-dependencies]
+tonic-build = "0.12"

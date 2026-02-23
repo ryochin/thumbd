@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package thumbd.v1;
+
+service ImageConverter {
+  // Convert an image to a thumbnail.
+  rpc Convert(ConvertRequest) returns (ConvertResponse);
+}
+
+message ConvertRequest {
+  bytes  image_data = 1;
+  uint32 max_width  = 2;
+  uint32 max_height = 3;
+  uint32 quality    = 4;
+  uint32 effort     = 5;
+}
+
+message ConvertResponse {
+  bytes  output_data = 1;
+  uint32 width       = 2;
+  uint32 height      = 3;
+  uint32 work_ms     = 4;
+}

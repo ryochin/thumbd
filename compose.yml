@@ -1,0 +1,18 @@
+services:
+  thumbd:
+    image: thumbd
+    build: .
+    volumes:
+      - thumbd-socket:/run/thumbd
+    restart: unless-stopped
+    environment:
+      RUST_LOG: thumbd=info
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/grpc-health-probe", "-addr=unix:/run/thumbd/thumbd.sock"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+volumes:
+  thumbd-socket:
