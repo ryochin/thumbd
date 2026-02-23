@@ -10,6 +10,7 @@ prost        = "0.13"
 tokio        = { version = "1", features = ["full"] }
 tokio-stream = { version = "0.1", features = ["net"] }
 image        = "0.25"
+turbojpeg    = "1"
 webp         = "0.3"
 libwebp-sys  = "0.9"
 clap         = { version = "4", features = ["derive"] }

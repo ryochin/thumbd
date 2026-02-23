@@ -7,6 +7,11 @@ ARG TARGETARCH
 # Install protoc (required by tonic-build at compile time) and download grpc-health-probe
 RUN apt-get update && apt-get install -y --no-install-recommends \
         protobuf-compiler \
+        cmake \
+        make \
+        nasm \
+        gcc \
+        g++ \
         curl \
     && GRPC_PROBE_VERSION=v0.4.45 \
     && BINARY="grpc_health_probe-linux-${TARGETARCH}" \
