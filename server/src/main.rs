@@ -72,10 +72,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         let _ = std::fs::remove_file(uds_path);
         let listener = UnixListener::bind(uds_path)?;
-        // Restrict socket to owner+group only (rw-rw----).
+        // Allow any process in the container to connect (rw-rw-rw-).
+        // Network-level isolation is provided by the Docker volume scope.
         // TCP TLS is required for cross-host connections (see spec §11); configure via
         // a TLS-terminating proxy or supply tonic::transport::ServerTlsConfig.
-        std::fs::set_permissions(uds_path, std::fs::Permissions::from_mode(0o660))?;
+        std::fs::set_permissions(uds_path, std::fs::Permissions::from_mode(0o666))?;
         let incoming = UnixListenerStream::new(listener);
 
         info!(addr = args.addr, n_workers, "starting thumbd (UDS)");

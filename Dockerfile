@@ -69,7 +69,7 @@ FROM gcr.io/distroless/cc-debian12
 
 COPY --from=builder /build/target/release/thumbd /usr/local/bin/thumbd
 COPY --from=builder /usr/local/bin/grpc-health-probe    /usr/local/bin/grpc-health-probe
-COPY --from=builder /run/thumbd                          /run/thumbd
+COPY --chown=65532:65532 --from=builder /run/thumbd      /run/thumbd
 
 # Run as non-root (distroless nonroot user, uid=65532)
 USER nonroot:nonroot
