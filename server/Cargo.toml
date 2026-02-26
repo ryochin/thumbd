@@ -15,7 +15,7 @@ webp         = "0.3"
 libwebp-sys  = "0.9"
 clap         = { version = "4", features = ["derive"] }
 tracing      = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-subscriber = { version = "0.3", features = ["env-filter", "chrono"] }
 
 [build-dependencies]
 tonic-build = "0.12"
