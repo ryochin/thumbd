@@ -125,8 +125,8 @@ impl ImageConverter for ImageConverterService {
         let params = ConvertParams {
             max_width: req.max_width,
             max_height: req.max_height,
-            quality: if req.quality == 0 { 80 } else { req.quality },
-            effort: if req.effort == 0 { 3 } else { req.effort },
+            quality: req.quality.unwrap_or(80),
+            effort: req.effort.unwrap_or(3),
         };
         let image_data = req.image_data;
 
@@ -220,10 +220,10 @@ fn validate(req: &ConvertRequest) -> Result<(), Status> {
     if req.max_height == 0 || req.max_height > 65535 {
         return Err(Status::invalid_argument("max_height: out of range"));
     }
-    if req.quality > 100 {
+    if req.quality.is_some_and(|q| q == 0 || q > 100) {
         return Err(Status::invalid_argument("quality: out of range"));
     }
-    if req.effort > 6 {
+    if req.effort.is_some_and(|e| e == 0 || e > 6) {
         return Err(Status::invalid_argument("effort: out of range"));
     }
     Ok(())
@@ -263,8 +263,8 @@ mod tests {
             image_data: vec![0u8; 100],
             max_width: 320,
             max_height: 240,
-            quality: 0,
-            effort: 0,
+            quality: None,
+            effort: None,
         }
     }
 
@@ -297,14 +297,14 @@ mod tests {
     #[test]
     fn validate_rejects_quality_over_100() {
         let mut req = make_valid_req();
-        req.quality = 101;
+        req.quality = Some(101);
         assert!(validate(&req).is_err());
     }
 
     #[test]
     fn validate_rejects_effort_over_6() {
         let mut req = make_valid_req();
-        req.effort = 7;
+        req.effort = Some(7);
         assert!(validate(&req).is_err());
     }
 }

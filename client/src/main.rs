@@ -35,13 +35,13 @@ struct Args {
     #[arg(short = 'H', long, default_value_t = 240)]
     max_height: u32,
 
-    /// WebP quality (1-100)
-    #[arg(short, long, default_value_t = 80)]
-    quality: u32,
+    /// WebP quality (1-100; omit to use server default)
+    #[arg(short, long)]
+    quality: Option<u32>,
 
-    /// WebP encoding effort (1-6; higher = better compression, slower)
-    #[arg(short, long, default_value_t = 4)]
-    effort: u32,
+    /// WebP encoding effort (1-6; higher = better compression, slower; omit to use server default)
+    #[arg(short, long)]
+    effort: Option<u32>,
 
     /// Request deadline in milliseconds
     #[arg(short, long, default_value_t = 5000)]
@@ -393,8 +393,8 @@ mod tests {
         .unwrap();
         assert_eq!(args.max_width, 320);
         assert_eq!(args.max_height, 240);
-        assert_eq!(args.quality, 80);
-        assert_eq!(args.effort, 4);
+        assert_eq!(args.quality, None);
+        assert_eq!(args.effort, None);
         assert!(!args.force);
     }
 
