@@ -8,6 +8,8 @@ use tokio::sync::{Semaphore, TryAcquireError};
 use tonic::metadata::MetadataMap;
 use tonic::{Request, Response, Status};
 
+use thousands::Separable;
+
 use crate::convert::{self, ConvertError, ConvertParams};
 use crate::proto::{image_converter_server::ImageConverter, ConvertRequest, ConvertResponse};
 
@@ -146,11 +148,15 @@ impl ImageConverter for ImageConverterService {
 
         match result {
             Ok(c) => {
+                let width = c.width.separate_with_commas();
+                let height = c.height.separate_with_commas();
+                let output_bytes = c.output_data.len().separate_with_commas();
+                let work_ms_fmt = work_ms.separate_with_commas();
                 tracing::info!(
-                    width = c.width,
-                    height = c.height,
-                    work_ms,
-                    output_bytes = c.output_data.len(),
+                    width = %width,
+                    height = %height,
+                    work_ms = %work_ms_fmt,
+                    output_bytes = %output_bytes,
                     "converted"
                 );
                 Ok(Response::new(ConvertResponse {
@@ -205,6 +211,7 @@ fn parse_grpc_timeout_ms(s: &str) -> Option<u64> {
     };
     Some(ms)
 }
+
 
 #[allow(clippy::result_large_err)]
 fn validate(req: &ConvertRequest) -> Result<(), Status> {
