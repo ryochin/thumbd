@@ -137,6 +137,7 @@ impl ImageConverter for ImageConverterService {
             effort: req.effort.unwrap_or(3),
         };
         let image_data = req.image_data;
+        let input_bytes = image_data.len();
 
         let work_start = Instant::now();
 
@@ -159,9 +160,11 @@ impl ImageConverter for ImageConverterService {
             Ok(c) => {
                 let width = c.width.separate_with_commas();
                 let height = c.height.separate_with_commas();
+                let input_bytes_fmt = input_bytes.separate_with_commas();
                 let output_bytes = c.output_data.len().separate_with_commas();
                 let work_ms_fmt = work_ms.separate_with_commas();
                 tracing::info!(
+                    input_bytes = %input_bytes_fmt,
                     width = %width,
                     height = %height,
                     work_ms = %work_ms_fmt,
