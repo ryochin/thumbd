@@ -82,17 +82,20 @@ impl ImageConverter for ImageConverterService {
         // Spec §6.3 order: field validation → deadline check → admission control
         // Destructure before consuming so we can access both body and metadata.
         let (metadata, _, req) = request.into_parts();
-        validate(&req)?;
-        let remaining_ms = check_deadline(&metadata)?;
+        validate(&req).inspect_err(|e| tracing::error!(message = e.message(), "validate"))?;
+        let remaining_ms = check_deadline(&metadata)
+            .inspect_err(|e| tracing::error!(message = e.message(), "check_deadline"))?;
 
         // Admission control: try to enter queue (non-blocking)
         let queue_permit = match self.queue_sem.clone().try_acquire_owned() {
             Ok(permit) => permit,
             Err(TryAcquireError::NoPermits) => {
-                return Err(Status::resource_exhausted("queue full"))
+                tracing::error!("queue full");
+                return Err(Status::resource_exhausted("queue full"));
             }
             Err(TryAcquireError::Closed) => {
-                return Err(Status::unavailable("server shutting down"))
+                tracing::error!("server shutting down");
+                return Err(Status::unavailable("server shutting down"));
             }
         };
 
@@ -109,11 +112,13 @@ impl ImageConverter for ImageConverterService {
                 Ok(Err(_)) => {
                     // Semaphore closed (server shutting down)
                     self.queue_depth.fetch_sub(1, Ordering::Relaxed);
+                    tracing::error!("server shutting down");
                     return Err(Status::unavailable("server shutting down"));
                 }
                 Err(_) => {
                     // Deadline expired while waiting in queue
                     self.queue_depth.fetch_sub(1, Ordering::Relaxed);
+                    tracing::error!("deadline exceeded");
                     return Err(Status::deadline_exceeded("deadline exceeded"));
                 }
             };
@@ -141,7 +146,10 @@ impl ImageConverter for ImageConverterService {
             r
         })
         .await
-        .map_err(|e| Status::internal(format!("worker panicked: {e}")))?;
+        .map_err(|e| {
+            tracing::error!("worker panicked: {e}");
+            Status::internal(format!("worker panicked: {e}"))
+        })?;
 
         inflight.fetch_sub(1, Ordering::Relaxed);
 
@@ -167,11 +175,20 @@ impl ImageConverter for ImageConverterService {
                     work_ms,
                 }))
             }
-            Err(ConvertError::Decode(msg)) => Err(Status::internal(msg)),
-            Err(ConvertError::Encode(msg)) => Err(Status::internal(msg)),
-            Err(ConvertError::UnsupportedFormat(n)) => Err(Status::invalid_argument(format!(
-                "unsupported image_type: {n}"
-            ))),
+            Err(ConvertError::Decode(msg)) => {
+                tracing::error!(message = %msg, "decode error");
+                Err(Status::internal(msg))
+            }
+            Err(ConvertError::Encode(msg)) => {
+                tracing::error!(message = %msg, "encode error");
+                Err(Status::internal(msg))
+            }
+            Err(ConvertError::UnsupportedFormat(n)) => {
+                tracing::error!(image_type = n, "unsupported format");
+                Err(Status::invalid_argument(format!(
+                    "unsupported image_type: {n}"
+                )))
+            }
         }
     }
 }
@@ -222,19 +239,32 @@ fn validate(req: &ConvertRequest) -> Result<(), Status> {
         return Err(Status::invalid_argument("image_data: empty"));
     }
     if req.image_data.len() > MAX_IMAGE_BYTES {
-        return Err(Status::invalid_argument("image_data: exceeds 50MB"));
+        return Err(Status::invalid_argument(format!(
+            "image_data: {} bytes exceeds 50MB",
+            req.image_data.len()
+        )));
     }
     if req.max_width == 0 || req.max_width > 65535 {
-        return Err(Status::invalid_argument("max_width: out of range"));
+        return Err(Status::invalid_argument(format!(
+            "max_width: out of range ({})",
+            req.max_width
+        )));
     }
     if req.max_height == 0 || req.max_height > 65535 {
-        return Err(Status::invalid_argument("max_height: out of range"));
+        return Err(Status::invalid_argument(format!(
+            "max_height: out of range ({})",
+            req.max_height
+        )));
     }
-    if req.quality.is_some_and(|q| q == 0 || q > 100) {
-        return Err(Status::invalid_argument("quality: out of range"));
+    if let Some(q) = req.quality.filter(|&q| q == 0 || q > 100) {
+        return Err(Status::invalid_argument(format!(
+            "quality: out of range ({q})"
+        )));
     }
-    if req.effort.is_some_and(|e| e == 0 || e > 6) {
-        return Err(Status::invalid_argument("effort: out of range"));
+    if let Some(e) = req.effort.filter(|&e| e == 0 || e > 6) {
+        return Err(Status::invalid_argument(format!(
+            "effort: out of range ({e})"
+        )));
     }
     Ok(())
 }
