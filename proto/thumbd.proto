@@ -7,12 +7,18 @@ service ImageConverter {
   rpc Convert(ConvertRequest) returns (ConvertResponse);
 }
 
+enum ImageType {
+  IMAGE_TYPE_UNSPECIFIED = 0;
+  IMAGE_TYPE_WEBP        = 1;
+}
+
 message ConvertRequest {
-  bytes  image_data = 1;
-  uint32 max_width  = 2;
-  uint32 max_height = 3;
-  optional uint32 quality = 4;
-  optional uint32 effort  = 5;
+  bytes     image_data  = 1;
+  ImageType image_type  = 2;
+  uint32    max_width   = 3;
+  uint32    max_height  = 4;
+  optional uint32 quality = 5;
+  optional uint32 effort  = 6;
 }
 
 message ConvertResponse {

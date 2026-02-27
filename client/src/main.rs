@@ -10,7 +10,7 @@ pub mod proto {
     tonic::include_proto!("thumbd.v1");
 }
 
-use proto::{image_converter_client::ImageConverterClient, ConvertRequest};
+use proto::{image_converter_client::ImageConverterClient, ConvertRequest, ImageType};
 
 #[cfg(target_os = "macos")]
 const DEFAULT_SERVER: &str = "unix:/tmp/thumbd/thumbd.sock";
@@ -113,6 +113,7 @@ async fn connect(addr: &str) -> Result<Channel, Box<dyn std::error::Error>> {
 fn make_request(image_data: Vec<u8>, args: &Args, deadline: u64) -> Request<ConvertRequest> {
     let mut req = Request::new(ConvertRequest {
         image_data,
+        image_type: ImageType::Webp as i32,
         max_width: args.max_width,
         max_height: args.max_height,
         quality: args.quality,
@@ -165,6 +166,7 @@ async fn run_bench(channel: Channel, image_data: Arc<Vec<u8>>, args: &Args) {
             let mut client = ImageConverterClient::new(channel);
             let mut req = Request::new(ConvertRequest {
                 image_data: data.as_ref().clone(),
+                image_type: ImageType::Webp as i32,
                 max_width,
                 max_height,
                 quality,

@@ -13,6 +13,7 @@ const MAX_INPUT_HEIGHT: u32 = 16_384;
 const MAX_DECODE_BYTES: u64 = 512 * 1024 * 1024;
 
 pub struct ConvertParams {
+    pub image_type: i32,
     pub max_width: u32,
     pub max_height: u32,
     pub quality: u32,
@@ -29,6 +30,7 @@ pub struct ConvertResult {
 pub enum ConvertError {
     Decode(String),
     Encode(String),
+    UnsupportedFormat(i32),
 }
 
 impl std::fmt::Display for ConvertError {
@@ -36,6 +38,7 @@ impl std::fmt::Display for ConvertError {
         match self {
             ConvertError::Decode(msg) => write!(f, "{msg}"),
             ConvertError::Encode(msg) => write!(f, "{msg}"),
+            ConvertError::UnsupportedFormat(n) => write!(f, "unsupported image type: {n}"),
         }
     }
 }
@@ -81,13 +84,20 @@ pub fn convert(image_data: &[u8], params: &ConvertParams) -> Result<ConvertResul
     let height = resized.height();
 
     let t2 = debug.then(Instant::now);
-    let encoder =
-        WebPEncoder::from_image(&resized).map_err(|e| ConvertError::Encode(e.to_string()))?;
-    let config = build_webp_config(params)?;
-    let webp = encoder
-        .encode_advanced(&config)
-        .map_err(|e| ConvertError::Encode(format!("{e:?}")))?;
-    let encode_ms = t2.map(|t| t.elapsed().as_millis()).unwrap_or(0);
+    // IMAGE_TYPE_UNSPECIFIED (0) falls through to WebP as the default.
+    let (output_data, encode_ms) = match params.image_type {
+        0 | 1 => {
+            let encoder = WebPEncoder::from_image(&resized)
+                .map_err(|e| ConvertError::Encode(e.to_string()))?;
+            let config = build_webp_config(params)?;
+            let webp = encoder
+                .encode_advanced(&config)
+                .map_err(|e| ConvertError::Encode(format!("{e:?}")))?;
+            let encode_ms = t2.map(|t| t.elapsed().as_millis()).unwrap_or(0);
+            (webp.to_vec(), encode_ms)
+        }
+        n => return Err(ConvertError::UnsupportedFormat(n)),
+    };
 
     tracing::debug!(
         src_w,
@@ -102,7 +112,7 @@ pub fn convert(image_data: &[u8], params: &ConvertParams) -> Result<ConvertResul
     );
 
     Ok(ConvertResult {
-        output_data: webp.to_vec(),
+        output_data,
         width,
         height,
     })
@@ -207,6 +217,7 @@ mod tests {
         // 4000x3000 JPEG を max 640x480 に変換 → 出力が 640x480 以内であること
         let jpeg = make_test_jpeg(4000, 3000);
         let params = ConvertParams {
+            image_type: 1,
             max_width: 640,
             max_height: 480,
             quality: 80,
@@ -226,6 +237,7 @@ mod tests {
         img.write_to(&mut std::io::Cursor::new(&mut buf), image::ImageFormat::Png)
             .unwrap();
         let params = ConvertParams {
+            image_type: 1,
             max_width: 640,
             max_height: 480,
             quality: 80,

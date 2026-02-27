@@ -125,6 +125,7 @@ impl ImageConverter for ImageConverterService {
 
         let inflight = self.inflight.clone();
         let params = ConvertParams {
+            image_type: req.image_type,
             max_width: req.max_width,
             max_height: req.max_height,
             quality: req.quality.unwrap_or(80),
@@ -168,6 +169,9 @@ impl ImageConverter for ImageConverterService {
             }
             Err(ConvertError::Decode(msg)) => Err(Status::internal(msg)),
             Err(ConvertError::Encode(msg)) => Err(Status::internal(msg)),
+            Err(ConvertError::UnsupportedFormat(n)) => Err(Status::invalid_argument(format!(
+                "unsupported image_type: {n}"
+            ))),
         }
     }
 }
@@ -211,7 +215,6 @@ fn parse_grpc_timeout_ms(s: &str) -> Option<u64> {
     };
     Some(ms)
 }
-
 
 #[allow(clippy::result_large_err)]
 fn validate(req: &ConvertRequest) -> Result<(), Status> {
@@ -268,6 +271,7 @@ mod tests {
     fn make_valid_req() -> ConvertRequest {
         ConvertRequest {
             image_data: vec![0u8; 100],
+            image_type: 1,
             max_width: 320,
             max_height: 240,
             quality: None,
