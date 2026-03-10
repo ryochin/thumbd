@@ -1,0 +1,21 @@
+version: '3'
+
+tasks:
+  server:
+    desc: Run server
+    aliases: [s]
+    env:
+      TZ: Asia/Tokyo
+      RUST_LOG: thumbd=debug
+    cmd: "cargo run --bin thumbd --release -- {{.CLI_ARGS}}"
+
+  client:
+    desc: Run client
+    aliases: [c]
+    env:
+      RUST_LOG: thumbd=debug
+    cmd: "cargo run --bin thumbd-client -- --force ./sample.jpg {{.CLI_ARGS}}"
+
+  default:
+    cmd: task -l --sort=none
+    silent: true
