@@ -1890,7 +1890,7 @@ dependencies = [
 
 [[package]]
 name = "thumbd"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "clap",
  "image",
@@ -1910,7 +1910,7 @@ dependencies = [
 
 [[package]]
 name = "thumbd-client"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "clap",
  "hyper-util",
