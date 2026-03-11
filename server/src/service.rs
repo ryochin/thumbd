@@ -157,18 +157,16 @@ impl ImageConverter for ImageConverterService {
 
         match result {
             Ok(c) => {
-                let width = c.width.separate_with_commas();
-                let height = c.height.separate_with_commas();
-                let input_bytes_fmt = input_bytes.separate_with_commas();
-                let output_bytes = c.output_data.len().separate_with_commas();
-                let work_ms_fmt = work_ms.separate_with_commas();
+                let output_bytes = c.output_data.len();
+                let ratio = output_bytes as f64 / input_bytes as f64 * 100.0;
                 tracing::info!(
-                    input_bytes = %input_bytes_fmt,
-                    width = %width,
-                    height = %height,
-                    work_ms = %work_ms_fmt,
-                    output_bytes = %output_bytes,
-                    "converted"
+                    "converted size={}x{} input/output={}/{} ({:.1}%) work_ms={}",
+                    c.width,
+                    c.height,
+                    input_bytes.separate_with_commas(),
+                    output_bytes.separate_with_commas(),
+                    ratio,
+                    work_ms.separate_with_commas(),
                 );
                 Ok(Response::new(ConvertResponse {
                     output_data: c.output_data,
