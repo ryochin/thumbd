@@ -62,10 +62,11 @@ thumbd --addr 0.0.0.0:50051
 
 **Options**
 
-| Flag              | Default                                                                        | Description                                        |
-| ----------------- | ------------------------------------------------------------------------------ | -------------------------------------------------- |
-| `-a`, `--addr`    | Linux: `unix:/run/thumbd/thumbd.sock`<br>macOS: `unix:/tmp/thumbd/thumbd.sock` | Bind address — TCP: `host:port`, UDS: `unix:/path` |
-| `-w`, `--workers` | CPU cores − 1 (min 1)                                                          | Number of conversion workers                       |
+| Flag                     | Default                                                                        | Description                                       |
+| ------------------------ | ------------------------------------------------------------------------------ | ------------------------------------------------- |
+| `-a`, `--addr`           | Linux: `unix:/run/thumbd/thumbd.sock`<br>macOS: `unix:/tmp/thumbd/thumbd.sock` | Bind address — TCP: `host:port`, UDS: `unix:/path` |
+| `-w`, `--workers`        | CPU cores (min 1)                                                              | Number of conversion workers                      |
+| `-q`, `--queue-capacity` | workers × 8                                                                   | Maximum number of requests waiting in queue        |
 
 ### Client CLI
 

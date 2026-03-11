@@ -28,9 +28,13 @@ struct Args {
     #[arg(short, long, default_value = DEFAULT_ADDR)]
     addr: String,
 
-    /// Number of workers (default: CPU cores - 1, minimum 1)
+    /// Number of workers (default: CPU cores, minimum 1)
     #[arg(short, long)]
     workers: Option<usize>,
+
+    /// Queue capacity (default: workers * 8)
+    #[arg(short, long)]
+    queue_capacity: Option<usize>,
 }
 
 #[tokio::main]
@@ -43,11 +47,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let n_workers = args.workers.unwrap_or_else(|| {
         std::thread::available_parallelism()
-            .map(|n| n.get().saturating_sub(1).max(1))
+            .map(|n| n.get().max(1))
             .unwrap_or(1)
     });
+    let queue_capacity = args.queue_capacity.unwrap_or(n_workers * 8);
 
-    let svc = ImageConverterService::new(n_workers);
+    let svc = ImageConverterService::new(n_workers, queue_capacity);
     let drain_handle = svc.shutdown_handle();
 
     let (mut health_reporter, health_service) = tonic_health::server::health_reporter();
@@ -81,7 +86,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         std::fs::set_permissions(uds_path, std::fs::Permissions::from_mode(0o666))?;
         let incoming = UnixListenerStream::new(listener);
 
-        info!(addr = args.addr, n_workers, "starting thumbd (UDS)");
+        info!(
+            addr = args.addr,
+            n_workers, queue_capacity, "starting thumbd (UDS)"
+        );
 
         builder
             .serve_with_incoming_shutdown(incoming, shutdown_signal(drain_handle))
@@ -91,7 +99,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         info!(
             addr = %addr,
-            n_workers, "starting thumbd (TCP)"
+            n_workers, queue_capacity, "starting thumbd (TCP)"
         );
 
         builder

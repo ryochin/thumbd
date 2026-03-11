@@ -52,8 +52,7 @@ impl ShutdownHandle {
 }
 
 impl ImageConverterService {
-    pub fn new(n_workers: usize) -> Self {
-        let queue_capacity = n_workers * 4;
+    pub fn new(n_workers: usize, queue_capacity: usize) -> Self {
         Self {
             queue_sem: Arc::new(Semaphore::new(queue_capacity)),
             work_sem: Arc::new(Semaphore::new(n_workers)),

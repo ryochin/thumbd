@@ -2,6 +2,7 @@ services:
   thumbd:
     image: thumbd
     build: .
+    command: ["--queue-capacity", "64"]
     volumes:
       - thumbd-socket:/run/thumbd
     restart: unless-stopped
